@@ -1,8 +1,8 @@
-/*
+--[[
 With entities, you can use  ENT:RenderOverride to not draw the holes in the first place, thereby not having to RenderView to draw the other side of holes (it would just be drawn as usual), and shaving off a huge part of the performance loss.
 
 It can be tricky, especially if you want to see the same entity through the hole (like the dumpster in your video), but with clever use of clip planes it's 100% doable.
-*/
+]]
 
 AddCSLuaFile()
 
