@@ -2,10 +2,10 @@ AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 include( "shared.lua" )
 
-local function TransformPosition( pos, hole, partner )
-	local lPos = hole:WorldToLocal( pos )
+function ENT:TransformPosition( pos )
+	local lPos = self:WorldToLocal( pos )
 	lPos:Rotate( Angle( 0, 180, 0 ) )
-	local wPos = partner:LocalToWorld( lPos )
+	local wPos = self:GetPartner():LocalToWorld( lPos )
 	return wPos
 end
 
@@ -23,7 +23,7 @@ function ENT:StartTouch( ent )
 		ent.OldMoveType = ent:GetMoveType()
 		ent:SetMoveType( MOVETYPE_NOCLIP )
 	else
-		ent:SetPos( TransformPosition( ent:GetPos(), self, self:GetPartner() ) )
+		ent:SetPos( self:TransformPosition( ent:GetPos() ) )
 	end
 
 	ent.BulletHole = self
@@ -31,13 +31,7 @@ function ENT:StartTouch( ent )
 
 end
 
-function ENT:EndTouch( ent )
-
-	if self:GetCaptive() == ent then
-		self:SetCaptive( nil )
-	end
-
-	if not ent.BulletHole or ent.BulletHole == self then return end
+function ENT:DropCaptive( ent )
 
 	timer.Simple( 0.05, function()
 
@@ -54,6 +48,30 @@ function ENT:EndTouch( ent )
 		ent.BulletHole = nil
 
 	end )
+
+	self:SetCaptive( nil )
+
+end
+
+function ENT:EndTouch( ent )
+
+	if not ent.BulletHole or ent.BulletHole == self then return end
+
+	self:DropCaptive( ent )
+
+end
+
+function ENT:Think()
+
+	local captive = self:GetCaptive()
+	if not IsValid( captive ) then return end
+
+	local partner = self:GetPartner()
+	if not IsValid( partner ) then return end
+
+	if captive:GetPos():Distance( self:GetPos() ) > self:GetPos():Distance( partner:GetPos() ) then
+		self:DropCaptive( captive )
+	end
 
 end
 

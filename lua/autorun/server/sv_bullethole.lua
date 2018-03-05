@@ -13,13 +13,23 @@ local function BackSide( trace, margin )
 	} )
 end
 
-hook.Add( "EntityFireBullets", "BulletHoles", function( ent, info )
+local function ParentHole( hole, ent, trace )
+	if IsValid( ent ) and trace.HitNonWorld then
+		if ent:IsRagdoll() then
+			hole:SetParentPhysNum( trace.PhysicsBone )
+		end
+		hole:SetParent( ent )
+		ent:DeleteOnRemove( hole )
+	end
+end
+
+hook.Add( "EntityFireBullets", "BulletHoles", function( ply, info )
 
 	local front = util.TraceLine( {
 		start = info.Src,
 		endpos = info.Src + info.Dir * info.Distance,
 		mask = MASK_SHOT_HULL,
-		filter = ent
+		filter = ply
 	} )
 	
 	local frontEnt = front.Entity
@@ -30,39 +40,31 @@ hook.Add( "EntityFireBullets", "BulletHoles", function( ent, info )
 		dir = front.Normal,
 		distance = info.Distance,
 		mask = MASK_SHOT_HULL,
-		filter = ent
+		filter = ply
 	}, 50 )
 
 	local backEnt = back.Entity
 	if IsValid( backEnt ) and backEnt:IsPlayer() or backEnt:IsNPC() then return end
 
-	--if front.HitPos:Distance( back.HitPos ) > 200 then return end
+	if front.HitPos:Distance( back.HitPos ) > 200 then return end
 
 	local size = math.random( 5, 10 )
 
 	local frontHole = ents.Create( "bullet_hole" )
-
-	if IsValid( frontEnt ) and front.HitNonWorld then
-		frontHole:SetParent( frontEnt )
-		frontEnt:DeleteOnRemove( frontHole )
-	end
-
 	frontHole:SetPos( front.HitPos )
 	frontHole:SetAngles( front.HitNormal:Angle() )
 	frontHole:SetSize( size )
 	frontHole:Spawn()
 
+	ParentHole( frontHole, frontEnt, front )
+
 	local backHole = ents.Create( "bullet_hole" )
-
-	if IsValid( backEnt ) and back.HitNonWorld then
-		backHole:SetParent( backEnt )
-		backEnt:DeleteOnRemove( backHole )
-	end
-
 	backHole:SetPos( back.HitPos )
 	backHole:SetAngles( back.HitNormal:Angle() )
 	backHole:SetSize( size )
 	backHole:Spawn()
+
+	ParentHole( backHole, backEnt, back )
 
 	frontHole:SetPartner( backHole )
 	backHole:SetPartner( frontHole )

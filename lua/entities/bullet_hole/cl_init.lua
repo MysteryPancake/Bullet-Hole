@@ -10,7 +10,7 @@ local mat = CreateMaterial( "UnlitGeneric", "GMODScreenspace", {
 	[ "$vertexalpha" ] = "1"
 } )
 
-local function DrawCircle( x, y, radius, seg )
+function ENT:DrawCircle( x, y, radius, seg )
 	local circle = {}
 	table.insert( circle, { x = x, y = y, u = 0.5, v = 0.5 } )
 	for i = 0, seg do
@@ -41,14 +41,13 @@ function ENT:Draw()
 		render.SetStencilFailOperation( STENCIL_KEEP )
 		render.SetStencilZFailOperation( STENCIL_KEEP )
 
-
 		local selfAng = self:GetAngles()
 		selfAng:RotateAroundAxis( selfAng:Right(), -90 )
 
 		cam.Start3D2D( self:GetPos() + self:GetForward(), selfAng, 1 )
 			draw.NoTexture()
 			surface.SetDrawColor( 0, 0, 0, 255 )
-			DrawCircle( 0, 0, self:GetSize(), self:GetSize() )
+			self:DrawCircle( 0, 0, self:GetSize(), self:GetSize() )
 		cam.End3D2D()
 
 		render.SetStencilReferenceValue( 1 )
@@ -62,7 +61,7 @@ function ENT:Draw()
 			draw.NoTexture()
 			cam.IgnoreZ( true )
 			surface.SetDrawColor( 255, 255, 255, 255 )
-			DrawCircle( 0, 0, partner:GetSize(), partner:GetSize() )
+			partner:DrawCircle( 0, 0, partner:GetSize(), partner:GetSize() )
 			cam.IgnoreZ( false )
 		cam.End3D2D()
 
@@ -73,14 +72,14 @@ function ENT:Draw()
 		render.SetMaterial( mat )
 		render.DrawScreenQuad()
 
-	render.SetStencilEnable( false )
+		if IsValid( self:GetCaptive() ) then
+			cam.Start3D()
+				cam.IgnoreZ( true )
+				self:GetCaptive():DrawModel()
+				cam.IgnoreZ( false )
+			cam.End3D()
+		end
 
-	if IsValid( self:GetCaptive() ) then
-		cam.Start3D()
-			cam.IgnoreZ( true )
-			self:GetCaptive():DrawModel()
-			cam.IgnoreZ( false )
-		cam.End3D()
-	end
+	render.SetStencilEnable( false )
 
 end
